@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>My test page</title>
+  </head>
+  <body>
+
+    <table cellspacing=0 cellpadding=3 border=1>
+        <thead>
+            <tr>
+                <th>athletes</th>
+                <th>Count</th>
+            </tr>
+        </thead>
+        <tbody>
+{% for key, value in athletes.items %}
+            <tr>
+                <td>{{key}}</td>
+                <td>{{value}}</td>
+            </tr>
+{% endfor %}
+        </tbody>
+    </table>
+
+    <p>Total of {{total}}</p>
+
+</body>
+</html>
