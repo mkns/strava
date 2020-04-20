@@ -2,10 +2,11 @@ from django.shortcuts import render
 from django.http import HttpResponse
 import requests
 import configparser
+import time
 
 def activity(request):
     access_token = get_access_token(request)  
-    activity_ids = get_list_of_activity_ids(request)
+    activity_ids = get_list_of_activity_ids(request, access_token)
     athletes = {}
     for i in range(len(activity_ids)):
         data = get_activity_kudos(activity_ids[i], access_token)
@@ -40,12 +41,26 @@ def get_config():
     return config
 
 def get_activity_kudos(activity_id, access_token):
+    headers = get_standard_get_header(access_token)
+    url = "https://www.strava.com/api/v3/activities/" + str(activity_id) + "/kudos?per_page=100"
+    return requests.get(url, headers=headers).json()
+
+def get_standard_get_header(access_token):
     headers = {
         'accept': 'application/json',
         'authorization': "Bearer " + access_token,
     }
-    url = "https://www.strava.com/api/v3/activities/" + activity_id + "/kudos?per_page=100"
-    return requests.get(url, headers=headers).json()
+    return headers
 
-def get_list_of_activity_ids(request):
-    return ['3288134900']
+def get_list_of_activity_ids(request, access_token):
+    now = int(time.time())
+    past = now - (60*60*24*90)
+    headers = get_standard_get_header(access_token)
+    url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&page1=&per_page=200"
+    print(url)
+    resp = requests.get(url, headers=headers).json()
+    print(resp)
+    list = []
+    for detail in resp:
+        list.append(detail['id'])
+    return list #['3288134900'] # list
