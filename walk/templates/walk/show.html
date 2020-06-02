@@ -7,6 +7,9 @@
   <body>
 
     <h1>Show Walks</h1>
+
+    <p>You know, these are just <em><a href="https://www.strava.com/oauth/authorize?client_id=2174&amp;response_type=code&amp;redirect_uri=http://127.0.0.1:8000/walk/update%3Fid={{wrong}}&amp;approval_prompt=force&amp;scope=read,activity:read_all,activity:write">wrong</a></em>...</p>
+
     <table cellspacing=0 cellpadding=3 border=1>
       <thead>
           <tr>
@@ -14,6 +17,7 @@
             <th>Title</th>
             <th>Distance</th>
             <th>Date</th>
+            <th>Gear ID</th>
             <th>Gear</th>
           </tr>
       </thead>
@@ -25,6 +29,7 @@
             <td>{{item.distance}}</td>
             <td>{{item.start_date_local}}</td>
             <td>{{item.gear_id}}</td>
+            <td>{{item.gearname}}</td>
           </tr>
 {% endfor %}
       </tbody>
