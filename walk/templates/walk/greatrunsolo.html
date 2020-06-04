@@ -2,13 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Show Walks</title>
+    <title>My test page</title>
   </head>
   <body>
 
-    <h1>Show Walks</h1>
-
-    <p>You know, these are just <em><a href="update?id={{wrong}}">wrong</a></em>...</p>
+    <p>Total distance: {{total_distance}}</p>
 
     <table cellspacing=0 cellpadding=3 border=1>
       <thead>
@@ -17,8 +15,6 @@
             <th>Title</th>
             <th>Distance</th>
             <th>Date</th>
-            <th>Gear ID</th>
-            <th>Gear</th>
           </tr>
       </thead>
       <tbody>
@@ -28,13 +24,10 @@
             <td>{{item.name}}</td>
             <td>{{item.distance}}</td>
             <td>{{item.start_date_local}}</td>
-            <td>{{item.gear_id}}</td>
-            <td>{{item.gearname}}</td>
           </tr>
 {% endfor %}
       </tbody>
   </table>
 
-
-</body>
+  </body>
 </html>
