@@ -3,27 +3,45 @@ import requests
 import configparser
 import time
 import json
+import ast
 from datetime import date
 
 def index(request):
     context = {}
-    my_cookie = cookie(request)
-    if my_cookie.get('redirect'):
-        return my_cookie['redirect']
+
+    # Check for code - if we got it, get an token and hold it for now
+    # If no code, check for cookie - if we got one, check it hasn't expired, and hold it
+    # If cookie has expired, refresh it, and get a new token
+    # If none of those, redirect to Strava authorization page
+    # Still here? We have an token, so check it works by hitting the Athlete page
+    # If that is successful, store it in a cookie and send them to the index page
+    config = get_config()
+    token = False
+    code = request.GET.get('code', False)
+    if code:
+        token = get_token(request, code, "access")
+    else:
+        if request.COOKIES.get('token'):
+            token = ast.literal_eval(request.COOKIES.get('token'))
+            if token['expires_at'] < time.time():
+                token = get_token(request, token['refresh_token'], "refresh")
+        else:
+            return redirect('https://www.strava.com/oauth/authorize?client_id=' + config['default']['client_id'] + '&amp;response_type=code&amp;redirect_uri=http://' + config['default']['hostname'] + '/walk/&amp;approval_prompt=force&amp;scope=read,activity:read,activity:read_all,activity:write')
+
+    # TODO: check the token actually works
+
     response = render(request, "walk/index.html", context)
-    response.set_cookie(key='access_token', value=my_cookie['access_token'])
+    response.set_cookie(key='token', value=token)
     return response
 
 def update(request):
-    my_cookie = cookie(request)
-    if my_cookie.get('redirect'):
-        return my_cookie['redirect']
+    access_token = get_access_token(request)
 
     id = request.GET.get('id', '')
     id_list = id.split(",")
     for i in id_list:
         print(i)
-        update_activity(my_cookie['access_token'], i)
+        update_activity(access_token, i)
     response = redirect("show")
     return response
 
@@ -36,24 +54,30 @@ def update_activity(access_token, activity_id):
     return True
 
 def show(request):
-    my_cookie = cookie(request)
-    if my_cookie.get('redirect'):
-        return my_cookie['redirect']
-    context = get_list_of_activities(request, my_cookie['access_token'])
+    access_token = get_access_token(request)
+    context = get_list_of_activities(request, access_token)
     return render(request, "walk/show.html", context)
 
-def get_access_token(request, code):
+def get_access_token(request):
+    return ast.literal_eval(request.COOKIES.get('token')).get('access_token')
+
+def get_token(request, code, type):
     config = get_config()
     url = 'https://www.strava.com/oauth/token'
     data = {
         'client_id': config['default']['client_id'],
 	    'client_secret': config['default']['client_secret'],
-	    'code': code,
-	    'grant_type': 'authorization_code',
     }
-    responseData = requests.post(url, data).json()
-    access_token = responseData['access_token']
-    return access_token
+    if type == 'refresh':
+        data['grant_type'] = 'refresh_token'
+        data['refresh_token'] = code
+    else:
+        data['grant_type'] = 'authorization_code'
+        data['code'] = code
+    print(data)
+    response_data = requests.post(url, data).json()
+    print(response_data)
+    return response_data
 
 def get_config():
     config = configparser.ConfigParser()
@@ -98,34 +122,20 @@ def get_standard_get_header(code):
     }
     return headers
 
-def cookie(request, activity_id=0):
-    config = get_config()
-    access_token = False
-    code = request.GET.get('code', False)
-    if code:
-        access_token = get_access_token(request, code)
-    else:
-        if request.COOKIES.get('access_token'):
-            access_token = request.COOKIES.get('access_token')    
-    if not access_token:
-        return {'redirect': redirect('https://www.strava.com/oauth/authorize?client_id=' + config['default']['client_id'] + '&amp;response_type=code&amp;redirect_uri=http://' + config['default']['hostname'] + '/walk/&amp;approval_prompt=force&amp;scope=read,activity:read,activity:read_all,activity:write')}
-    return {'access_token': access_token}
-
 def greatrunsolo(request):
     context = {}
-    my_cookie = cookie(request)
-    if my_cookie.get('redirect'):
-        return my_cookie['redirect']
+    access_token = get_access_token(request)
 
     now = int(time.time())
     d = date(2020, 5, 18)
     past = time.mktime(d.timetuple())
 
-    headers = get_standard_get_header(my_cookie['access_token'])
+    headers = get_standard_get_header(access_token)
     activities = []
     url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&per_page=200"
     print(url)
     resp = requests.get(url, headers=headers).json()
+
     total_distance = 0
     for detail in resp:
         if(detail['type'] == "Run"):
@@ -134,3 +144,8 @@ def greatrunsolo(request):
     context['activities'] = activities
     context['total_distance'] = total_distance
     return render(request, "walk/greatrunsolo.html", context)
+
+def is_response_valid(response):
+    if response.get('errors'):
+        return False
+    return True
