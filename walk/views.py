@@ -4,7 +4,7 @@ import configparser
 import time
 import json
 import ast
-from datetime import date
+from datetime import date, datetime
 
 def index(request):
     context = {}
@@ -94,9 +94,11 @@ def get_list_of_activities(request, access_token):
     for page in range(1, 3):
         url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&page=" + str(page) + "&per_page=200"
         print(url)
-        resp = requests.get(url, headers=headers).json()
-        # print(resp)
-        for detail in resp:
+        response = requests.get(url, headers=headers)
+        if (response.status_code != 200):
+            return redirect("./")
+        responseData = response.json()
+        for detail in responseData:
             # merrells are g6179895
             if(detail['type'] == "Walk"): # and detail['gear_id'] == 'g4493370':
                 if detail['gear_id'] not in gear:
@@ -134,16 +136,82 @@ def greatrunsolo(request):
     activities = []
     url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&per_page=200"
     print(url)
-    resp = requests.get(url, headers=headers).json()
+    response = requests.get(url, headers=headers)
+    if (response.status_code != 200):
+        return redirect("./")
 
+    responseData = response.json()
     total_distance = 0
-    for detail in resp:
+    for detail in responseData:
         if(detail['type'] == "Run"):
+            detail['nicedate'] = datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
+            format_distance(detail)
             activities.append(detail)
             total_distance += detail['distance']
     context['activities'] = activities
-    context['total_distance'] = total_distance
+    context['total_distance'] = '{:.2f}'.format(total_distance/1000)
     return render(request, "walk/greatrunsolo.html", context)
+
+def runs(request):
+    context = {}
+    access_token = get_access_token(request)
+
+    now = int(time.time())
+    d = date(2020, 1, 1)
+    past = time.mktime(d.timetuple())
+
+    headers = get_standard_get_header(access_token)
+    activities = []
+    url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&per_page=200"
+    print(url)
+    response = requests.get(url, headers=headers)
+    if (response.status_code != 200):
+        return redirect("./")
+
+    responseData = response.json()
+    total_distance = 0
+    for detail in responseData:
+        if(detail['type'] == "Run"):
+            detail['nicedate'] = datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
+            format_distance(detail)
+            activities.append(detail)
+            total_distance += detail['distance']
+    context['activities'] = activities
+    context['total_distance'] = '{:.2f}'.format(total_distance/1000)
+    return render(request, "walk/runs.html", context)
+
+def private(request):
+    context = {}
+    access_token = get_access_token(request)
+
+    now = int(time.time())
+    d = date(2020, 1, 1)
+    past = time.mktime(d.timetuple())
+
+    headers = get_standard_get_header(access_token)
+    activities = []
+    url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&per_page=200"
+    print(url)
+    response = requests.get(url, headers=headers)
+    if (response.status_code != 200):
+        return redirect("./")
+
+    responseData = response.json()
+    total_distance = 0
+    for detail in responseData:
+        if(detail['private'] == True):
+            detail['nicedate'] = datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
+            format_distance(detail)
+            activities.append(detail)
+            total_distance += detail['distance']
+    context['activities'] = activities
+    context['total_distance'] = '{:.2f}'.format(total_distance/1000)
+    return render(request, "walk/private.html", context)
+
+
+def format_distance(detail):
+    distance = float(format(detail['distance'])) / 1000
+    detail['nicedistance'] = '{:.2f}'.format(distance)
 
 def is_response_valid(response):
     if response.get('errors'):

@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Great Run Solo</title>
+    <title>Runs</title>
   </head>
   <body>
 
@@ -21,7 +21,7 @@
 {% for item in activities %}
           <tr>
             <td>{{item.nicedate}}</td>
-            <td>{{item.id}}</td>
+            <td><a href="https://www.strava.com/activities/{{item.id}}">{{item.id}}</a></td>
             <td>{{item.name}}</td>
             <td style='text-align: right'>{{item.nicedistance}} km</td>
           </tr>
