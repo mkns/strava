@@ -4,7 +4,9 @@ import configparser
 import time
 import json
 import ast
-from datetime import date, datetime
+import datetime
+from datetime import date
+import calendar
 
 def index(request):
     context = {}
@@ -144,7 +146,7 @@ def greatrunsolo(request):
     total_distance = 0
     for detail in responseData:
         if(detail['type'] == "Run"):
-            detail['nicedate'] = datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
+            detail['nicedate'] = datetime.datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
             format_distance(detail)
             activities.append(detail)
             total_distance += detail['distance']
@@ -172,7 +174,7 @@ def runs(request):
     total_distance = 0
     for detail in responseData:
         if(detail['type'] == "Run"):
-            detail['nicedate'] = datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
+            detail['nicedate'] = datetime.datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
             format_distance(detail)
             activities.append(detail)
             total_distance += detail['distance']
@@ -200,7 +202,7 @@ def private(request):
     total_distance = 0
     for detail in responseData:
         if(detail['private'] == True):
-            detail['nicedate'] = datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
+            detail['nicedate'] = datetime.datetime.fromisoformat(detail['start_date_local'][:-1]).strftime("%b %d %Y %H:%M:%S") # for some reason i have to hack off the Z
             format_distance(detail)
             activities.append(detail)
             total_distance += detail['distance']
@@ -217,3 +219,22 @@ def is_response_valid(response):
     if response.get('errors'):
         return False
     return True
+
+def weekly(request):
+    context = {}
+
+    day = get_monday_of_this_week()
+    print(day)
+    for i in range(1, 53):
+        day = get_previous_monday(day)
+        print(day, int(time.mktime(day.timetuple())))
+    
+    return render(request, "walk/weekly.html", context)
+
+def get_monday_of_this_week():
+    today = date.today()
+    monday = today + datetime.timedelta(days=-today.weekday())
+    return monday
+
+def get_previous_monday(monday):
+    return monday + datetime.timedelta(weeks=-1)

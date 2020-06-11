@@ -9,4 +9,5 @@ urlpatterns = [
     path('greatrunsolo', views.greatrunsolo, name='greatrunsolo'),
     path('runs', views.runs, name='runs'),
     path('private', views.private, name='private'),
+    path('weekly', views.weekly, name='weekly'),
 ]

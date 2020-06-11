@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Weekly</title>
+  </head>
+  <body>
+
+    <p>Total distance: {{total_distance}} km</p>
+
+    <table cellspacing=0 cellpadding=3 border=1>
+      <thead>
+          <tr>
+            <th>Date</th>
+            <th>id</th>
+            <th>Title</th>
+            <th>Type</th>
+            <th>Distance</th>
+          </tr>
+      </thead>
+      <tbody>
+{% for item in activities %}
+          <tr>
+            <td>{{item.nicedate}}</td>
+            <td><a href="https://www.strava.com/activities/{{item.id}}">{{item.id}}</a></td>
+            <td>{{item.name}}</td>
+            <td>{{item.type}}</td>
+            <td style='text-align: right'>{{item.nicedistance}} km</td>
+          </tr>
+{% endfor %}
+      </tbody>
+  </table>
+
+  </body>
+</html>
