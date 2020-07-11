@@ -51,7 +51,7 @@ def update_activity(access_token, activity_id):
     url = "https://www.strava.com/api/v3/activities/" + str(activity_id)
     print(url)
     headers = get_standard_get_header(access_token)
-    data = {'gear_id': 'g6179895'}
+    data = {'gear_id': 'g6542177'}
     requests.put(url, headers=headers, data=data).json()
     return True
 
@@ -101,7 +101,7 @@ def get_list_of_activities(request, access_token):
             return redirect("./")
         responseData = response.json()
         for detail in responseData:
-            # merrells are g6179895
+            # merrells are g6542177
             if(detail['type'] == "Walk"): # and detail['gear_id'] == 'g4493370':
                 if detail['gear_id'] not in gear:
                     gearname = get_gear(access_token, detail['gear_id'])
@@ -133,10 +133,11 @@ def greatrunsolo(request):
     now = int(time.time())
     d = date(2020, 5, 18)
     past = time.mktime(d.timetuple())
+    last = past + (86400*28)
 
     headers = get_standard_get_header(access_token)
     activities = []
-    url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&per_page=200"
+    url = "https://www.strava.com/api/v3/athlete/activities?before=" + str(now) + "&after=" + str(past) + "&per_page=200&before=" + str(last)
     print(url)
     response = requests.get(url, headers=headers)
     if (response.status_code != 200):
@@ -223,6 +224,14 @@ def is_response_valid(response):
 def weekly(request):
     context = {}
 
+    # for each week
+    # create week key
+    # get all activities
+    # for each activity
+    # identify type, create key if it doesn't exist
+    # add value to key
+    # increment counter
+    
     day = get_monday_of_this_week()
     print(day)
     for i in range(1, 53):
